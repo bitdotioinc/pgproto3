@@ -8,7 +8,7 @@ import (
 
 // Backend acts as a server for the PostgreSQL wire protocol version 3.
 type Backend struct {
-	cr ChunkReader
+	r io.Reader
 	w  io.Writer
 
 	// Frontend message flyweights
@@ -33,8 +33,8 @@ type Backend struct {
 }
 
 // NewBackend creates a new Backend.
-func NewBackend(cr ChunkReader, w io.Writer) *Backend {
-	return &Backend{cr: cr, w: w}
+func NewBackend(r io.Reader, w io.Writer) *Backend {
+	return &Backend{r: r, w: w}
 }
 
 // Send sends a message to the frontend.
@@ -43,38 +43,47 @@ func (b *Backend) Send(msg BackendMessage) error {
 	return err
 }
 
-// ReceiveStartupMessage receives the initial connection message. This method is used of the normal Receive method
+// ReceiveStartupMessage receives the initial connection message. This method is used instead of the normal Receive method
 // because the initial connection message is "special" and does not include the message type as the first byte. This
 // will return either a StartupMessage, SSLRequest, or CancelRequest.
 func (b *Backend) ReceiveStartupMessage() (FrontendMessage, error) {
-	buf, err := b.cr.Next(4)
+	buf := make([]byte, 4)
+	n, err := io.ReadFull(b.r, buf)
 	if err != nil {
 		return nil, err
 	}
+	if n != 4 {
+		return nil, fmt.Errorf("Did not read the full startup message header, read=%d, error=%v", n, err)
+	}
+
 	msgSize := int(binary.BigEndian.Uint32(buf) - 4)
 
-	buf, err = b.cr.Next(msgSize)
+	msgBody := make([]byte, msgSize)
+	n, err = io.ReadFull(b.r, msgBody)
 	if err != nil {
 		return nil, err
 	}
+	if n != msgSize {
+		return nil, fmt.Errorf("Did not read the full startup message, read=%d, error=%v", n, err)
+	}
 
-	code := binary.BigEndian.Uint32(buf)
+	code := binary.BigEndian.Uint32(msgBody)
 
 	switch code {
 	case ProtocolVersionNumber:
-		err = b.startupMessage.Decode(buf)
+		err = b.startupMessage.Decode(msgBody)
 		if err != nil {
 			return nil, err
 		}
 		return &b.startupMessage, nil
 	case sslRequestNumber:
-		err = b.sslRequest.Decode(buf)
+		err = b.sslRequest.Decode(msgBody)
 		if err != nil {
 			return nil, err
 		}
 		return &b.sslRequest, nil
 	case cancelRequestCode:
-		err = b.cancelRequest.Decode(buf)
+		err = b.cancelRequest.Decode(msgBody)
 		if err != nil {
 			return nil, err
 		}
@@ -87,15 +96,40 @@ func (b *Backend) ReceiveStartupMessage() (FrontendMessage, error) {
 // Receive receives a message from the frontend.
 func (b *Backend) Receive() (FrontendMessage, error) {
 	if !b.partialMsg {
-		header, err := b.cr.Next(5)
+		header := make([]byte, 5)
+		n, err := io.ReadFull(b.r, header)
 		if err != nil {
 			return nil, err
+		}
+		if n!=5 {
+			return nil, fmt.Errorf("Did not read the full message header, read=%d, error=%v", n, err)
 		}
 
 		b.msgType = header[0]
 		b.bodyLen = int(binary.BigEndian.Uint32(header[1:])) - 4
 		b.partialMsg = true
 	}
+
+	if b.msgType == 'd' {
+		msg := &CopyData{
+			[]byte{},
+			// This reader has to be read before the next Receive() call
+			io.LimitReader(b.r, int64(b.bodyLen)),
+		}
+		b.partialMsg = false
+		return msg, nil
+	}
+
+	msgBody := make([]byte, b.bodyLen)
+	n, err := io.ReadFull(b.r, msgBody)
+	if err != nil {
+		return nil, err
+	}		
+	if n != b.bodyLen {
+		return nil, fmt.Errorf("Message declared len is longer than the actual message")
+	}
+
+	b.partialMsg = false
 
 	var msg FrontendMessage
 	switch b.msgType {
@@ -124,13 +158,6 @@ func (b *Backend) Receive() (FrontendMessage, error) {
 	default:
 		return nil, fmt.Errorf("unknown message type: %c", b.msgType)
 	}
-
-	msgBody, err := b.cr.Next(b.bodyLen)
-	if err != nil {
-		return nil, err
-	}
-
-	b.partialMsg = false
 
 	err = msg.Decode(msgBody)
 	return msg, err
