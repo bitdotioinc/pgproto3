@@ -41,6 +41,7 @@ type Frontend struct {
 	readyForQuery                   ReadyForQuery
 	rowDescription                  RowDescription
 	portalSuspended                 PortalSuspended
+	noSSL				NoSSL
 
 	bodyLen    int
 	msgType    byte
