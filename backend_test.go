@@ -3,7 +3,7 @@ package pgproto3_test
 import (
 	"testing"
 
-	"github.com/jackc/pgproto3/v2"
+	"github.com/bitdotioinc/pgproto3/v2"
 )
 
 func TestBackendReceiveInterrupted(t *testing.T) {
@@ -12,7 +12,7 @@ func TestBackendReceiveInterrupted(t *testing.T) {
 	server := &interruptReader{}
 	server.push([]byte{'Q', 0, 0, 0, 6})
 
-	backend := pgproto3.NewBackend(pgproto3.NewChunkReader(server), nil)
+	backend := pgproto3.NewBackend(server, nil)
 
 	msg, err := backend.Receive()
 	if err == nil {

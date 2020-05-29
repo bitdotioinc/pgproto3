@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/jackc/pgproto3/v2"
+	"github.com/bitdotioinc/pgproto3/v2"
 )
 
 type PgFortuneBackend struct {

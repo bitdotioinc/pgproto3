@@ -7,7 +7,7 @@ pgfortune is a mock PostgreSQL server that responds to every query with a fortun
 Install `fortune` and `cowsay`. They should be available in any Unix package manager (apt, yum, brew, etc.)
 
 ```
-go get -u github.com/jackc/pgproto3/example/pgfortune
+go get -u github.com/bitdotioinc/pgproto3/example/pgfortune
 ```
 
 ## Usage
