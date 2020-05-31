@@ -61,7 +61,7 @@ func (dst *RowDescription) Decode(src []byte) error {
 	}
 	dst.MsgLen = int32(binary.BigEndian.Uint32(src[1:5]))
 	fieldCount := int(binary.BigEndian.Uint16(src[5:7]))
-	rp := 7
+	rp := 6
 
 	dst.Fields = make([]FieldDescription, 0, fieldCount)
 
