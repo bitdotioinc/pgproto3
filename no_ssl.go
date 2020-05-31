@@ -21,7 +21,7 @@ func (dst *NoSSL) Decode(src []byte) error {
 
 // Encode encodes src into dst. dst will include the 1 byte message type identifier and the 4 byte message length.
 func (src *NoSSL) Encode(dst []byte) []byte {
-	return append(dst, '3', 0, 0, 0, 4)
+	return append(dst, 'N', 0, 0, 0, 4)
 }
 
 // MarshalJSON implements encoding/json.Marshaler.
