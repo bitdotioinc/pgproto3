@@ -59,8 +59,8 @@ func (dst *RowDescription) Decode(src []byte) error {
 	if len(src) < 2 {
 		return &invalidMessageFormatErr{messageType: "RowDescription"}
 	}
-	dst.MsgLen = int32(binary.BigEndian.Uint32(src[1:5]))
-	fieldCount := int(binary.BigEndian.Uint16(src[5:7]))
+	dst.MsgLen = int32(binary.BigEndian.Uint32(src[0:4]))
+	fieldCount := int(binary.BigEndian.Uint16(src[4:6]))
 	rp := 6
 
 	dst.Fields = make([]FieldDescription, 0, fieldCount)
