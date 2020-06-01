@@ -16,6 +16,7 @@ type Backend struct {
 	cancelRequest   CancelRequest
 	_close          Close
 	copyFail        CopyFail
+	copyData	CopyData
 	describe        Describe
 	execute         Execute
 	flush           Flush
@@ -117,16 +118,6 @@ func (b *Backend) Receive() (FrontendMessage, error) {
 		b.partialMsg = true
 	}
 
-	if b.msgType == 'd' {
-		msg := &CopyData{
-			[]byte{},
-			// This reader has to be read before the next Receive() call
-			io.LimitReader(b.r, int64(b.bodyLen)),
-		}
-		b.partialMsg = false
-		return msg, nil
-	}
-
 	msgBody := make([]byte, b.bodyLen)
 	n, err := io.ReadFull(b.r, msgBody)
 	if err != nil {
@@ -146,6 +137,8 @@ func (b *Backend) Receive() (FrontendMessage, error) {
 		msg = &b._close
 	case 'D':
 		msg = &b.describe
+	case 'd':
+		msg = &b.copyData
 	case 'E':
 		msg = &b.execute
 	case 'f':

@@ -83,16 +83,6 @@ func (f *Frontend) Receive() (BackendMessage, error) {
 		f.partialMsg = true
 	}
 
-	if f.msgType == 'd' {
-		msg := &CopyData{
-			[]byte{},
-			// This reader has to be read before the next Receive() call
-			io.LimitReader(f.r, int64(f.bodyLen)),
-		}
-		f.partialMsg = false
-		return msg, nil
-	}
-
 	msgBody := make([]byte, f.bodyLen)
 	n, err := io.ReadFull(f.r, msgBody)
 	if err != nil {

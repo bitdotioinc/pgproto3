@@ -10,7 +10,6 @@ import (
 
 type CopyData struct {
 	Data []byte
-	r    io.Reader
 }
 
 // Backend identifies this message as sendable by the PostgreSQL backend.
@@ -43,8 +42,4 @@ func (src CopyData) MarshalJSON() ([]byte, error) {
 		Type: "CopyData",
 		Data: hex.EncodeToString(src.Data),
 	})
-}
-
-func (src *CopyData) Reader() io.Reader {
-	return src.r
 }
