@@ -46,7 +46,6 @@ func (fd FieldDescription) MarshalJSON() ([]byte, error) {
 
 type RowDescription struct {
 	Fields []FieldDescription
-	MsgLen int32
 }
 
 // Backend identifies this message as sendable by the PostgreSQL backend.
@@ -59,11 +58,10 @@ func (dst *RowDescription) Decode(src []byte) error {
 	if len(src) < 2 {
 		return &invalidMessageFormatErr{messageType: "RowDescription"}
 	}
-	dst.MsgLen = int32(binary.BigEndian.Uint32(src[0:4]))
-	fieldCount := int(binary.BigEndian.Uint16(src[4:6]))
-	rp := 6
+	fieldCount := int(binary.BigEndian.Uint16(src))
+	rp := 2
 
-	dst.Fields = make([]FieldDescription, 0, fieldCount)
+	dst.Fields = dst.Fields[0:0]
 
 	for i := 0; i < fieldCount; i++ {
 		var fd FieldDescription
