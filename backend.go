@@ -17,6 +17,7 @@ type Backend struct {
 	_close          Close
 	copyFail        CopyFail
 	copyData	CopyData
+	copyDone	CopyDone
 	describe        Describe
 	execute         Execute
 	flush           Flush
@@ -135,6 +136,8 @@ func (b *Backend) Receive() (FrontendMessage, error) {
 		msg = &b.bind
 	case 'C':
 		msg = &b._close
+	case 'c':
+		msg = &b.copyDone
 	case 'D':
 		msg = &b.describe
 	case 'd':
