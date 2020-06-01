@@ -3,7 +3,6 @@ package pgproto3
 import (
 	"encoding/hex"
 	"encoding/json"
-	"io"
 
 	"github.com/jackc/pgio"
 )
