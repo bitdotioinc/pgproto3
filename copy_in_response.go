@@ -65,8 +65,10 @@ func (src CopyInResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Type              string
 		ColumnFormatCodes []uint16
+		OverallFormat	  byte
 	}{
 		Type:              "CopyInResponse",
 		ColumnFormatCodes: src.ColumnFormatCodes,
+		OverallFormat: src.OverallFormat, 
 	})
 }
