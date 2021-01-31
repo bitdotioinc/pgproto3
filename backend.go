@@ -46,6 +46,17 @@ func (b *Backend) Send(msg BackendMessage) error {
 	return err
 }
 
+
+// Send sends a BATCH of messages to the frontend.
+func (b *Backend) SendAll(msgs []BackendMessage) error {
+	encoded_messages := make([]byte, 0)
+	for _, m := range msgs {
+		encoded_messages = append(encoded_messages, m.Encode(nil)...)
+	}
+	_, err := b.w.Write(encoded_messages)
+	return err
+}
+
 // ReceiveStartupMessage receives the initial connection message. This method is used instead of the normal Receive method
 // because the initial connection message is "special" and does not include the message type as the first byte. This
 // will return either a StartupMessage, SSLRequest, GSSEncRequest, or CancelRequest.

@@ -59,6 +59,16 @@ func (f *Frontend) Send(msg FrontendMessage) error {
 	return err
 }
 
+// Send sends a BATCH of messages to the backend.
+func (f *Frontend) SendAll(msgs []FrontendMessage) error {
+        encoded_messages := make([]byte, 0)
+        for _, m := range msgs {
+                encoded_messages = append(encoded_messages, m.Encode(nil)...)
+        }
+        _, err := f.w.Write(encoded_messages)
+        return err
+}
+
 func translateEOFtoErrUnexpectedEOF(err error) error {
 	if err == io.EOF {
 		return io.ErrUnexpectedEOF
